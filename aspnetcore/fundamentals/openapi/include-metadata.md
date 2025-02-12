@@ -489,8 +489,8 @@ The following table summarizes attributes from the `System.ComponentModel` names
 | [`[Required]`](xref:System.ComponentModel.DataAnnotations.RequiredAttribute)          | Marks a property as `required` in the schema. |
 | [`[DefaultValue]`](xref:System.ComponentModel.DefaultValueAttribute)                      | Sets the `default` value of a property in the schema. |
 | [`[Range]`](xref:System.ComponentModel.DataAnnotations.RangeAttribute)             | Sets the `minimum` and `maximum` value of an integer or number. |
-| [`[MinLength]`](xref:System.ComponentModel.DataAnnotations.MinLengthAttribute)         | Sets the `minLength` of a string. |
-| [`[MaxLength]`](xref:System.ComponentModel.DataAnnotations.MaxLengthAttribute)         | Sets the `maxLength` of a string. |
+| [`[MinLength]`](xref:System.ComponentModel.DataAnnotations.MinLengthAttribute)         | Sets the `minLength` of a string or `minItems` of an array. |
+| [`[MaxLength]`](xref:System.ComponentModel.DataAnnotations.MaxLengthAttribute)         | Sets the `maxLength` of a string or `maxItems` of an array. |
 | [`[RegularExpression]`](xref:System.ComponentModel.DataAnnotations.RegularExpressionAttribute) | Sets the `pattern` of a string. |
 
 Note that in controller-based apps, these attributes add filters to the operation to validate that any incoming data satisfies the constraints. In Minimal APIs, these attributes set the metadata in the generated schema but validation must be performed explicitly via an endpoint filter, in the route handler's logic, or via a third-party package.
@@ -566,7 +566,7 @@ If the additional properties of a schema should only have values of a specific t
 
 #### Polymorphic types
 
-Use the [`[JsonPolymorphic]`](xref:System.Text.Json.Serialization.JsonPolymorphicAttribute) and [`[JsonDerivedType]`](xref:System.Text.Json.Serialization.JsonDerivedTypeAttribute) attributes on a parent class to to specify the discriminator field and subtypes for a polymorphic type.
+Use the [`[JsonPolymorphic]`](xref:System.Text.Json.Serialization.JsonPolymorphicAttribute) and [`[JsonDerivedType]`](xref:System.Text.Json.Serialization.JsonDerivedTypeAttribute) attributes on a parent class to specify the discriminator field and subtypes for a polymorphic type.
 
 The [`[JsonDerivedType]`](xref:System.Text.Json.Serialization.JsonDerivedTypeAttribute) adds the discriminator field to the schema for each subclass, with an enum specifying the specific discriminator value for the subclass. This attribute also modifies the constructor of each derived class to set the discriminator value.
 

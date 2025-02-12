@@ -5,7 +5,7 @@ description: Learn how to generate and customize OpenAPI documents in an ASP.NET
 ms.author: safia
 monikerRange: '>= aspnetcore-6.0'
 ms.custom: mvc
-ms.date: 12/11/2024
+ms.date: 01/23/2025
 uid: fundamentals/openapi/aspnetcore-openapi
 ---
 # Generate OpenAPI documents
@@ -45,10 +45,10 @@ dotnet add package Microsoft.AspNetCore.OpenApi
 
 The following code:
 
-* Adds OpenAPI services.
-* Enables the endpoint for viewing the OpenAPI document in JSON format.
+* Adds OpenAPI services using the <xref:Microsoft.Extensions.DependencyInjection.OpenApiServiceCollectionExtensions.AddOpenApi%2A> extension method on the app builder's service collection.
+* Maps an endpoint for viewing the OpenAPI document in JSON format with the <xref:Microsoft.AspNetCore.Builder.OpenApiEndpointRouteBuilderExtensions.MapOpenApi%2A> extension method on the app.
 
-[!code-csharp[](~/fundamentals/openapi/samples/9.x/WebMinOpenApi/Program.cs?name=snippet_first&highlight=3,7)]
+[!code-csharp[](~/fundamentals/openapi/samples/9.x/WebMinOpenApi/Program.cs?name=snippet_first&highlight=3,9)]
 
 Launch the app and navigate to `https://localhost:<port>/openapi/v1.json` to view the generated OpenAPI document.
 
@@ -64,7 +64,7 @@ Each OpenAPI document in an app has a unique name. The default document name tha
 builder.Services.AddOpenApi(); // Document name is v1
 ```
 
-The document name can be modified by passing the name as a parameter to the `AddOpenApi` call.
+The document name can be modified by passing the name as a parameter to the <xref:Microsoft.Extensions.DependencyInjection.OpenApiServiceCollectionExtensions.AddOpenApi%2A> call.
 
 ```csharp
 builder.Services.AddOpenApi("internal"); // Document name is internal
@@ -116,6 +116,36 @@ The OpenAPI document is regenerated every time a request to the OpenAPI endpoint
 
 [!code-csharp[](~/fundamentals/openapi/samples/9.x/WebMinOpenApi/Program.cs?name=snippet_mapopenapiwithcaching)]
 
+## Generate multiple OpenAPI documents
+
+In some scenarios, it's helpful to generate multiple OpenAPI documents with different content from a single ASP.NET Core API app. These scenarios include:
+
+* Generating OpenAPI documentation for different audiences, such as public and internal APIs.
+* Generating OpenAPI documentation for different versions of an API.
+* Generating OpenAPI documentation for different parts of an application, such as a frontend and backend API.
+
+To generate multiple OpenAPI documents, call the <xref:Microsoft.Extensions.DependencyInjection.OpenApiServiceCollectionExtensions.AddOpenApi%2A> extension method once for each document, specifying a different document name in the first parameter each time.
+
+```csharp
+builder.Services.AddOpenApi("v1");
+builder.Services.AddOpenApi("v2");
+```
+
+Each invocation of <xref:Microsoft.Extensions.DependencyInjection.OpenApiServiceCollectionExtensions.AddOpenApi%2A> can specify its own set of options, so that you can choose to use the same or different customizations for each OpenAPI document.
+
+The framework uses the <xref:Microsoft.AspNetCore.OpenApi.OpenApiOptions.ShouldInclude> delegate method of <xref:Microsoft.AspNetCore.OpenApi.OpenApiOptions> to determine which endpoints to include in each document.
+
+For each document, the <xref:Microsoft.AspNetCore.OpenApi.OpenApiOptions.ShouldInclude> delegate method is called for each endpoint in the application, passing the <xref:Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription> object for the endpoint. The method returns a boolean value indicating whether the endpoint should be included in the document. The <xref:Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription> object contains information about the endpoint, such as the HTTP method, route, and response types, as well as metadata attached to the endpoint via attributes or extension methods.
+
+The default implementation of this delegate uses the <xref:Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription.GroupName> field of <xref:Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription>, which is set on an endpoint using either the <xref:Microsoft.AspNetCore.Builder.RoutingEndpointConventionBuilderExtensions.WithGroupName%2A> extension method or the <xref:Microsoft.AspNetCore.Routing.EndpointGroupNameAttribute> attribute, to determine which endpoints to include in the document. Any endpoint that has not been assigned a group name is included all OpenAPI documents.
+
+```csharp
+    // Include endpoints without a group name or with a group name that matches the document name
+    ShouldInclude = (description) => description.GroupName == null || description.GroupName == DocumentName;    
+```
+
+You can customize the <xref:Microsoft.AspNetCore.OpenApi.OpenApiOptions.ShouldInclude> delegate method to include or exclude endpoints based on any criteria you choose.
+
 ## Generate OpenAPI documents at build-time
 
 In typical web applications, OpenAPI documents are generated at run-time and served via an HTTP request to the application server.
@@ -160,11 +190,11 @@ By default, the generated OpenAPI document will be emitted to the application's 
 
 ```xml
 <PropertyGroup>
-  <OpenApiDocumentsDirectory>./</OpenApiDocumentsDirectory>
+  <OpenApiDocumentsDirectory>.</OpenApiDocumentsDirectory>
 </PropertyGroup>
 ```
 
-The value of `OpenApiDocumentsDirectory` is resolved relative to the project file. Using the `./` value above will emit the OpenAPI document in the same directory as the project file.
+The value of `OpenApiDocumentsDirectory` is resolved relative to the project file. Using the `.` value above will emit the OpenAPI document in the same directory as the project file.
 
 #### Modifying the output file name
 
@@ -197,9 +227,7 @@ In order to restrict these code paths from being invoked by the build-time gener
 
 :::code language="csharp" source="~/fundamentals/openapi/samples/9.x/AspireApp1/AspireApp1.Web/Program.cs" highlight="5-8":::
 
-<!--keep-->[AddServiceDefaults](https://source.dot.net/#TestingAppHost1.ServiceDefaults/Extensions.cs,0f0d863053754768,references) Adds common .NET Aspire services such as service discovery, resilience, health checks, and OpenTelemetry.
-
-:::moniker-end
+[AddServiceDefaults](https://source.dot.net/#TestingAppHost1.ServiceDefaults/Extensions.cs,0f0d863053754768,references)<!--keep--> adds common .NET Aspire services such as service discovery, resilience, health checks, and OpenTelemetry.
 
 ## Trimming and Native AOT
 
@@ -232,5 +260,7 @@ Publish the app.
 ```console
 dotnet publish
 ```
+
+:::moniker-end
 
 [!INCLUDE[](~/fundamentals/openapi/includes/aspnetcore-openapi6-8.md)]
